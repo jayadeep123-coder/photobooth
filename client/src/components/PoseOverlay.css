@@ -1,0 +1,45 @@
+.pose-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pose-overlay.active {
+  opacity: 1;
+}
+
+.silhouette {
+  width: 60%;
+  height: 80%;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.3s ease;
+}
+
+.pose-overlay.positioned .silhouette {
+  color: rgba(102, 187, 106, 0.8);
+}
+
+.pose-hint {
+  position: absolute;
+  bottom: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  backdrop-filter: blur(4px);
+}
+
+.pose-hint.success {
+  background: rgba(102, 187, 106, 0.8);
+}

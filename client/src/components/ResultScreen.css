@@ -1,0 +1,438 @@
+.result-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100vw;
+  padding: 40px 5%;
+  background-color: #faf8f5;
+  overflow-x: hidden;
+}
+
+.result-layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
+  max-width: 1100px;
+  align-items: center;
+}
+
+@media (min-width: 992px) {
+  .result-layout-wrapper {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+/* Sidebar Editor Panel */
+.editor-sidebar {
+  flex: 1;
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding: 30px;
+  text-align: left !important;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.sidebar-subtitle {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-top: -15px;
+  line-height: 1.4;
+}
+
+.decor-section h4,
+.adjustment-section h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 12px;
+  border-bottom: 2px solid var(--secondary-color);
+  padding-bottom: 6px;
+}
+
+.decor-hint {
+  font-size: 0.78rem;
+  color: #95a5a6;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Sticker Buttons */
+.decor-dock {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px;
+  margin: 15px 0;
+}
+
+.sticker-btn {
+  background: white;
+  border: 2px solid var(--secondary-color);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  padding: 8px;
+}
+
+.sticker-btn svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sticker-btn:hover {
+  transform: scale(1.18);
+  border-color: var(--primary-color);
+  box-shadow: 0 6px 15px rgba(255, 142, 113, 0.15);
+}
+
+.sticker-btn:active {
+  transform: scale(0.95);
+}
+
+/* Adjustment Sliders */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.slider-group label {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.slider-group label span {
+  color: var(--primary-hover);
+  font-weight: 700;
+}
+
+.slider-group input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--secondary-color);
+  outline: none;
+}
+
+.slider-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 142, 113, 0.4);
+  transition: transform 0.1s ease;
+}
+
+.slider-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Actions Section */
+.action-buttons.horizontal {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.action-buttons.horizontal .btn {
+  flex: 1;
+  padding: 14px 20px;
+  font-size: 0.95rem;
+}
+
+.download-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.reset-btn {
+  background-color: white;
+  border: 2px solid var(--secondary-color);
+  color: var(--text-color);
+}
+
+/* Preview Image Area */
+.preview-container {
+  flex: 1.2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background-color: white;
+}
+
+.result-image-container {
+  position: relative; /* CRITICAL for absolute children positioning */
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  max-width: 440px;
+  width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+
+.result-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Draggable SVG Sticker overlay */
+.draggable-sticker {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  cursor: move;
+  transform: translate(-50%, -50%); /* Centers sticker on cursor coordinates */
+  user-select: none;
+  touch-action: none; /* Prevents viewport scrolling while dragging */
+  z-index: 10;
+  transition: transform 0.1s ease;
+}
+
+.draggable-sticker svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+.draggable-sticker:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.draggable-sticker:active {
+  transform: translate(-50%, -50%) scale(0.95);
+  cursor: grabbing;
+}
+
+/* Template Picker Styling */
+.template-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.template-thumb {
+  background: white;
+  border: 2px solid var(--secondary-color);
+  border-radius: 12px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  outline: none;
+}
+
+.template-thumb:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(255, 142, 113, 0.1);
+}
+
+.template-thumb.active {
+  border-color: var(--primary-color);
+  background-color: #fff9f8;
+  box-shadow: 0 4px 15px rgba(255, 142, 113, 0.15);
+}
+
+.thumb-preview {
+  width: 100%;
+  height: 80px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  overflow: hidden;
+}
+
+.thumb-preview.bg-pattern-stripe {
+  background: repeating-linear-gradient(90deg, #fbf7f0, #fbf7f0 8px, #f3edd6 8px, #f3edd6 10px);
+}
+
+.thumb-preview.bg-pattern-pink-stripe {
+  background: repeating-linear-gradient(90deg, #ffffff, #ffffff 8px, #fde4ec 8px, #fde4ec 11px, #fdf2e9 11px, #fdf2e9 13px);
+}
+
+.thumb-preview.bg-pattern-kraft-paper {
+  background-color: #e5dbcd;
+  background-image: radial-gradient(rgba(0,0,0,0.06) 1px, transparent 0);
+  background-size: 6px 6px;
+}
+
+.thumb-layout-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 26px;
+  height: 100%;
+  padding: 4px 0;
+}
+
+/* Custom Thumb Styles for Canva Templates */
+.thumb-layout-strip.friends-forever-thumb {
+  background-color: #fde2d5; /* Peach film strip */
+  padding: 4px 3px;
+  border-radius: 1px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid #ebd3c8;
+}
+
+.thumb-layout-strip.friends-forever-thumb .thumb-box {
+  background-color: #161616; /* Black frame */
+}
+
+.thumb-layout-strip.friends-scrapbook-thumb {
+  background-color: #161616; /* Black film strip */
+  padding: 4px 3px;
+  border-radius: 1px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  border: 1px solid #333333;
+}
+
+.thumb-layout-strip.friends-scrapbook-thumb .thumb-box {
+  background-color: #0a0a0a; /* Darker black frame */
+}
+
+.thumb-layout-strip.valentine-strip-thumb {
+  background-color: #ffffff; /* White paper strip */
+  padding: 4px 3px;
+  border-radius: 1px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  border: 1px solid #e0e0e0;
+}
+
+.thumb-layout-strip.valentine-strip-thumb .thumb-box {
+  background-color: #888888; /* Grayscale frame */
+}
+
+.thumb-layout-strip.live-in-moment-thumb {
+  background-color: transparent;
+  gap: 6px;
+}
+
+.thumb-layout-strip.live-in-moment-thumb .thumb-box {
+  background-color: #eae5db;
+  border-radius: 4px; /* Highly rounded frame corners */
+}
+
+.thumb-layout-strip.vintage-love-thumb {
+  background-color: #faf8f5; /* Cream paper strip background */
+  padding: 4px 3px;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  border: 1px dashed #e3ded5;
+}
+
+.thumb-layout-strip .thumb-box {
+  width: 100%;
+  flex: 1;
+  background-color: #ebdccb;
+  border-radius: 2px;
+}
+
+.thumb-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  width: 50px;
+  height: 50px;
+}
+
+.thumb-layout-grid .thumb-box {
+  background-color: #ebdccb;
+  border-radius: 2px;
+}
+
+.thumb-layout-polaroid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 48px;
+  background-color: #fefefa;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.thumb-box-polaroid {
+  width: 100%;
+  height: 80%;
+  background-color: #ebdccb;
+  border-radius: 2px;
+}
+
+.thumb-name {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-color);
+}
+
+/* Caption Editor Input box */
+.caption-editor-input {
+  width: 100%;
+  padding: 10px 16px;
+  border: 2px solid var(--secondary-color);
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.3s ease;
+  text-align: center;
+  background-color: white;
+  color: var(--text-color);
+}
+
+.caption-editor-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 10px rgba(255, 142, 113, 0.15);
+}
+
+/* Loader Container on preview */
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  width: 100%;
+  color: #7f8c8d;
+  font-family: 'Outfit', sans-serif;
+}
