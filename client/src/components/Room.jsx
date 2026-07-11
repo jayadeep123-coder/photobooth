@@ -4,6 +4,7 @@ import { captureFrame } from '../utils/capture';
 import { removeBackground } from '../utils/segmentation';
 import { createPhotostrip } from '../utils/composite';
 import PoseOverlay from './PoseOverlay';
+import ReactionOverlay from './ReactionOverlay';
 import { playTick, playShutter } from '../utils/audio';
 import './Room.css';
 
@@ -27,6 +28,8 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
   const remoteVideoRef = useRef();
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
+  const remoteReactionRef = useRef(null);
+  const localPoseRef = useRef(null);
 
   const configuration = {
     iceServers: [
@@ -194,6 +197,12 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
       }, Math.max(0, startDelay));
     });
 
+    socket.on('remote-reaction', (data) => {
+      if (remoteReactionRef.current) {
+        remoteReactionRef.current.triggerReaction(data.type, data.x, data.y);
+      }
+    });
+
     return () => {
       socket.off('user-joined');
       socket.off('webrtc-offer');
@@ -203,6 +212,7 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
       socket.off('countdown-started');
       socket.off('remote-pose-status');
       socket.off('remote-config-change');
+      socket.off('remote-reaction');
     };
   }, [roomId, isSolo]);
 
@@ -375,6 +385,19 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
           <PoseOverlay 
             videoElement={localVideoRef.current} 
             onPositionChange={setIsLocalInPosition} 
+            onPoseUpdate={(pose) => {
+              localPoseRef.current = pose;
+            }}
+          />
+          <ReactionOverlay 
+            videoElement={localVideoRef.current} 
+            isLocal={true}
+            localPoseRef={localPoseRef}
+            onTrigger={(data) => {
+              if (!isSolo) {
+                socket.emit('trigger-reaction', { roomId, ...data });
+              }
+            }}
           />
           <div className="video-label">You {isLocalInPosition ? '(Ready)' : '(Aligning...)'}</div>
         </div>
@@ -390,6 +413,13 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
                 filter: getFilterStyle(filter)
               }}
             />
+            {remoteStreamReady && (
+              <ReactionOverlay 
+                ref={remoteReactionRef}
+                videoElement={remoteVideoRef.current} 
+                isLocal={false}
+              />
+            )}
             {remoteStreamReady ? (
               <div className="video-label">Friend {isRemoteInPosition ? '(Ready)' : '(Aligning...)'}</div>
             ) : (

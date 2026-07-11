@@ -86,6 +86,10 @@ io.on('connection', (socket) => {
     socket.to(data.roomId).emit('remote-config-change', data);
   });
 
+  socket.on('trigger-reaction', (data) => {
+    socket.to(data.roomId).emit('remote-reaction', data);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     if (socket.roomId) {

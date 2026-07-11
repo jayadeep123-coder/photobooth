@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getPoseLandmarker } from '../utils/pose';
 import './PoseOverlay.css';
 
-export default function PoseOverlay({ videoElement, onPositionChange }) {
+export default function PoseOverlay({ videoElement, onPositionChange, onPoseUpdate }) {
   const [isReady, setIsReady] = useState(false);
   const [isInPosition, setIsInPosition] = useState(false);
   const requestRef = useRef();
@@ -50,9 +50,17 @@ export default function PoseOverlay({ videoElement, onPositionChange }) {
               if (onPositionChange) {
                 onPositionChange(positioned);
               }
+              if (onPoseUpdate) {
+                onPoseUpdate({
+                  nose: nose ? { x: nose.x, y: nose.y } : null,
+                  leftShoulder: leftShoulder ? { x: leftShoulder.x, y: leftShoulder.y } : null,
+                  rightShoulder: rightShoulder ? { x: rightShoulder.x, y: rightShoulder.y } : null
+                });
+              }
             } else {
               setIsInPosition(false);
               if (onPositionChange) onPositionChange(false);
+              if (onPoseUpdate) onPoseUpdate(null);
             }
           } catch (e) {
             console.error('Detection error:', e);
