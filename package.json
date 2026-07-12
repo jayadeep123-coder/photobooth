@@ -1,0 +1,14 @@
+{
+  "name": "photobooth-root",
+  "version": "1.0.0",
+  "description": "Virtual Photobooth root runner for easier deployment",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}
