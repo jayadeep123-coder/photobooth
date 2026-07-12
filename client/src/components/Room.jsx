@@ -31,12 +31,10 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
   const remoteReactionRef = useRef(null);
   const localPoseRef = useRef(null);
 
-  const configuration = {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ]
-  };
+  const iceServersRef = useRef([
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' }
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -58,6 +56,10 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
 
         socket.emit('join-room', roomId, (response) => {
           if (!isMounted) return;
+          if (response.iceServers) {
+            iceServersRef.current = response.iceServers;
+            console.log('[WebRTC] Received ICE/TURN server config from signaling server:', response.iceServers);
+          }
           if (response.status === 'full') {
             setStatus('Room is full');
           } else if (response.status === 'created') {
@@ -95,7 +97,9 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
     if (isSolo) return;
 
     const createPeerConnection = () => {
-      const pc = new RTCPeerConnection(configuration);
+      const pc = new RTCPeerConnection({
+        iceServers: iceServersRef.current
+      });
       
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => {
@@ -105,7 +109,34 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          const cand = event.candidate.candidate;
+          if (cand.includes('relay')) {
+            console.log('[WebRTC] Gathered local relay candidate (TURN):', cand);
+          } else if (cand.includes('srflx')) {
+            console.log('[WebRTC] Gathered local srflx candidate (STUN):', cand);
+          } else {
+            console.log('[WebRTC] Gathered local host candidate:', cand);
+          }
           socket.emit('ice-candidate', { roomId, candidate: event.candidate });
+        }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log('[WebRTC] ICE connection state changed to:', pc.iceConnectionState);
+        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          try {
+            pc.getStats().then(stats => {
+              stats.forEach(report => {
+                if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                  const localCand = stats.get(report.localCandidateId);
+                  const remoteCand = stats.get(report.remoteCandidateId);
+                  console.log(`[WebRTC] Active connection path: local=${localCand?.candidateType} (protocol=${localCand?.protocol}), remote=${remoteCand?.candidateType} (protocol=${remoteCand?.protocol})`);
+                }
+              });
+            });
+          } catch (e) {
+            console.error('[WebRTC] Error retrieving connection statistics:', e);
+          }
         }
       };
 
@@ -157,9 +188,18 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
     socket.on('ice-candidate', async (data) => {
       if (peerConnectionRef.current) {
         try {
-          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+          const candidate = new RTCIceCandidate(data.candidate);
+          const cand = candidate.candidate;
+          if (cand.includes('relay')) {
+            console.log('[WebRTC] Adding remote relay candidate (TURN):', cand);
+          } else if (cand.includes('srflx')) {
+            console.log('[WebRTC] Adding remote srflx candidate (STUN):', cand);
+          } else {
+            console.log('[WebRTC] Adding remote host candidate:', cand);
+          }
+          await peerConnectionRef.current.addIceCandidate(candidate);
         } catch (err) {
-          console.error('Error adding ice candidate', err);
+          console.error('[WebRTC] Error adding remote ice candidate', err);
         }
       }
     });

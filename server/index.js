@@ -4,16 +4,73 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+const FRONTEND_URL = process.env.FRONTEND_URL;
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow if origin is undefined (e.g. server-to-server or local testing)
+    if (!origin) return callback(null, true);
+    
+    // If FRONTEND_URL is set, allow it
+    if (FRONTEND_URL && origin === FRONTEND_URL) {
+      return callback(null, true);
+    }
+    
+    // Allow localhost for local development
+    if (/^https?:\/\/localhost:\d+$/.test(origin)) {
+      return callback(null, true);
+    }
+    
+    // Allow any onrender.com subdomains for easy deployment
+    if (/\.onrender\.com$/.test(origin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST']
+};
+
+app.use(cors(corsOptions));
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
+  cors: corsOptions
 });
+
+const getIceServers = () => {
+  const iceServers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' }
+  ];
+
+  // If environment variables are set for TURN, use them.
+  // Otherwise, default to Metered.ca Open Relay for out-of-the-box WebRTC traversal support.
+  const turnUrl = process.env.TURN_URL || 'turn:openrelay.metered.ca:443';
+  const turnUsername = process.env.TURN_USERNAME || 'openrelayproject';
+  const turnPassword = process.env.TURN_PASSWORD || 'openrelayproject';
+
+  if (turnUrl) {
+    iceServers.push({
+      urls: turnUrl,
+      username: turnUsername,
+      credential: turnPassword
+    });
+  }
+
+  const turnUrlTcp = process.env.TURN_URL_TCP || 'turn:openrelay.metered.ca:443?transport=tcp';
+  if (turnUrlTcp) {
+    iceServers.push({
+      urls: turnUrlTcp,
+      username: turnUsername,
+      credential: turnPassword
+    });
+  }
+
+  return iceServers;
+};
 
 const PORT = process.env.PORT || 3001;
 
@@ -23,16 +80,17 @@ io.on('connection', (socket) => {
   socket.on('join-room', (roomId, callback) => {
     const room = io.sockets.adapter.rooms.get(roomId);
     const numClients = room ? room.size : 0;
+    const iceServers = getIceServers();
 
     if (numClients === 0) {
       socket.join(roomId);
       socket.roomId = roomId;
-      callback({ status: 'created' });
+      callback({ status: 'created', iceServers });
       console.log(`User ${socket.id} created room ${roomId}`);
     } else if (numClients === 1) {
       socket.join(roomId);
       socket.roomId = roomId;
-      callback({ status: 'joined' });
+      callback({ status: 'joined', iceServers });
       console.log(`User ${socket.id} joined room ${roomId}`);
       // Notify the other user that someone joined
       socket.to(roomId).emit('user-joined', socket.id);
