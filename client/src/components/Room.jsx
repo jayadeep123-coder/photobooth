@@ -10,6 +10,7 @@ import './Room.css';
 
 export default function Room({ roomId, isSolo, onCaptureComplete }) {
   const [status, setStatus] = useState('Joining room...');
+  const [isCameraReady, setIsCameraReady] = useState(false);
   const [remoteStreamReady, setRemoteStreamReady] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [activeShot, setActiveShot] = useState(0);
@@ -49,25 +50,12 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
           localVideoRef.current.srcObject = stream;
         }
 
+        setIsCameraReady(true);
+
         if (isSolo) {
           setStatus('Ready to snap!');
           return;
         }
-
-        socket.emit('join-room', roomId, (response) => {
-          if (!isMounted) return;
-          if (response.iceServers) {
-            iceServersRef.current = response.iceServers;
-            console.log('[WebRTC] Received ICE/TURN server config from signaling server:', response.iceServers);
-          }
-          if (response.status === 'full') {
-            setStatus('Room is full');
-          } else if (response.status === 'created') {
-            setStatus('Waiting for friend to join...');
-          } else if (response.status === 'joined') {
-            setStatus('Connected! Waiting for video...');
-          }
-        });
       } catch (err) {
         if (!isMounted) return;
         console.error('Error accessing media devices:', err);
@@ -94,7 +82,7 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
   }, [isLocalInPosition, roomId, isSolo]);
 
   useEffect(() => {
-    if (isSolo) return;
+    if (isSolo || !isCameraReady) return;
 
     const createPeerConnection = () => {
       const pc = new RTCPeerConnection({
@@ -151,6 +139,51 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
       peerConnectionRef.current = pc;
       return pc;
     };
+
+    const joinRoom = () => {
+      setStatus('Joining room...');
+      socket.emit('join-room', roomId, (response) => {
+        if (response.iceServers) {
+          iceServersRef.current = response.iceServers;
+          console.log('[WebRTC] Received ICE/TURN server config from signaling server:', response.iceServers);
+        }
+        if (response.status === 'full') {
+          setStatus('Room is full');
+        } else if (response.status === 'created') {
+          setStatus('Waiting for friend to join...');
+        } else if (response.status === 'joined') {
+          setStatus('Connected! Waiting for video...');
+        }
+      });
+    };
+
+    const handleConnect = () => {
+      console.log('[Socket] Connected to signaling server.');
+      joinRoom();
+    };
+
+    const handleConnectError = (err) => {
+      console.error('[Socket] Connection error:', err);
+      setStatus('Server connection failed. Retrying...');
+    };
+
+    const handleDisconnect = (reason) => {
+      console.warn('[Socket] Disconnected from server:', reason);
+      setStatus('Disconnected from server. Reconnecting...');
+      setRemoteStreamReady(false);
+      setIsRemoteInPosition(false);
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = null;
+      }
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+    };
+
+    socket.on('connect', handleConnect);
+    socket.on('connect_error', handleConnectError);
+    socket.on('disconnect', handleDisconnect);
 
     socket.on('user-joined', async () => {
       const pc = createPeerConnection();
@@ -243,7 +276,17 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
       }
     });
 
+    if (socket.connected) {
+      joinRoom();
+    } else {
+      setStatus('Connecting to signaling server...');
+      socket.connect();
+    }
+
     return () => {
+      socket.off('connect', handleConnect);
+      socket.off('connect_error', handleConnectError);
+      socket.off('disconnect', handleDisconnect);
       socket.off('user-joined');
       socket.off('webrtc-offer');
       socket.off('webrtc-answer');
@@ -254,7 +297,7 @@ export default function Room({ roomId, isSolo, onCaptureComplete }) {
       socket.off('remote-config-change');
       socket.off('remote-reaction');
     };
-  }, [roomId, isSolo]);
+  }, [roomId, isSolo, isCameraReady]);
 
   const startCountdown = () => {
     if (isSolo) {

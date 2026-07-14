@@ -12,8 +12,10 @@ const corsOptions = {
     // Allow if origin is undefined (e.g. server-to-server or local testing)
     if (!origin) return callback(null, true);
     
-    // If FRONTEND_URL is set, allow it
-    if (FRONTEND_URL && origin === FRONTEND_URL) {
+    // If FRONTEND_URL is set, allow it (strip trailing slash if present)
+    const sanitizedFrontendUrl = FRONTEND_URL ? FRONTEND_URL.replace(/\/$/, '') : null;
+    const sanitizedOrigin = origin ? origin.replace(/\/$/, '') : null;
+    if (sanitizedFrontendUrl && sanitizedOrigin === sanitizedFrontendUrl) {
       return callback(null, true);
     }
     
@@ -24,6 +26,16 @@ const corsOptions = {
     
     // Allow any onrender.com subdomains for easy deployment
     if (/\.onrender\.com$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    // Allow any vercel.app subdomains for easy deployment
+    if (/\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    // Allow any railway.app subdomains for easy deployment
+    if (/\.railway\.app$/.test(origin)) {
       return callback(null, true);
     }
     
